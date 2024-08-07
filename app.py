@@ -1,47 +1,86 @@
 import streamlit as st
-import random
+from openai import OpenAI
+import os
 
-# 한국 현대 문학 이론을 반영한 질문 리스트
-questions = [
-    "작품의 주제는 무엇인가요? (예: 개인과 사회의 갈등, 근대화의 영향, 전쟁의 상처)",
-    "어떤 서술 시점을 사용하고 싶나요? (1인칭, 3인칭 전지적, 3인칭 제한적)",
-    "작품의 시대적 배경은 언제인가요? (예: 일제강점기, 한국전쟁, 산업화 시대, 현대)",
-    "주인공의 성격을 어떻게 설정하고 싶나요? (예: 내향적, 외향적, 이상주의적, 현실주의적)",
-    "작품에서 다루고 싶은 한국 현대 문학의 주요 모티프가 있나요? (예: 고향, 이산, 도시와 농촌의 대비)",
-    "어떤 문체를 사용하고 싶나요? (예: 서정적, 객관적, 실험적, 구어체)",
-    "작품에서 사용하고 싶은 상징이 있나요? (예: 나비, 까마귀, 항아리)",
-    "작품의 결말을 어떻게 구상하고 있나요? (열린 결말, 비극적 결말, 희망적 결말)",
-    "한국 현대 문학의 어떤 흐름을 반영하고 싶나요? (예: 리얼리즘, 모더니즘, 포스트모더니즘)",
-    "작품에서 다루고 싶은 사회적 이슈가 있나요? (예: 계급 문제, 성 역할, 세대 갈등)"
-]
+# OpenAI API 키 설정
+os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
-def generate_story(answers):
-    # 여기에 실제 이야기 생성 로직을 구현합니다.
-    # 이 예제에서는 간단한 템플릿을 사용합니다.
-    story = f"""
-    {answers[3]}인 주인공은 {answers[2]}을 배경으로 한 이야기에서 {answers[0]}에 대해 고민합니다. 
-    {answers[1]} 시점으로 서술되는 이 작품은 {answers[5]} 문체를 사용하여 {answers[4]}를 탐구합니다. 
-    {answers[6]}을(를) 상징으로 사용하여 {answers[8]}의 특징을 보여주며, 
-    {answers[9]}와(과) 같은 사회적 이슈를 다룹니다. 
-    결국 이야기는 {answers[7]}로 마무리됩니다.
+client = OpenAI()
+
+# 문학 갈래별 질문 리스트
+questions = {
+    "서정": [
+        "어떤 감정이나 정서를 표현하고 싶나요?",
+        "시의 주제는 무엇인가요? (예: 사랑, 자연, 삶과 죽음)",
+        "어떤 이미지나 비유를 사용하고 싶나요?",
+        "시의 형식은 어떤 것을 선호하나요? (자유시, 정형시)",
+        "어떤 분위기를 만들고 싶나요? (서정적, 우울한, 역동적 등)"
+    ],
+    "서사": [
+        "이야기의 주요 플롯은 무엇인가요?",
+        "주인공의 성격을 어떻게 설정하고 싶나요?",
+        "작품의 시대적 배경은 언제인가요?",
+        "어떤 문체를 사용하고 싶나요? (1인칭, 3인칭 등)",
+        "작품에서 다루고 싶은 주요 주제나 메시지가 있나요?"
+    ],
+    "극": [
+        "극의 주요 갈등은 무엇인가요?",
+        "주요 등장인물들을 어떻게 설정하고 싶나요?",
+        "극의 배경 (시간과 장소)은 어디인가요?",
+        "어떤 종류의 극을 쓰고 싶나요? (비극, 희극, 풍자극 등)",
+        "관객에게 전달하고 싶은 메시지는 무엇인가요?"
+    ],
+    "교술": [
+        "어떤 주제나 개념을 설명하고 싶나요?",
+        "목표로 하는 독자층은 누구인가요?",
+        "어떤 형식을 사용하고 싶나요? (에세이, 논문, 평론 등)",
+        "주장을 뒷받침할 주요 논거나 예시가 있나요?",
+        "글의 톤은 어떻게 설정하고 싶나요? (학술적, 대중적, 비판적 등)"
+    ]
+}
+
+def generate_work(genre, answers):
+    prompt = f"""
+    다음 정보를 바탕으로 한국 현대 문학의 {genre} 갈래에 해당하는 작품의 개요나 일부를 작성해주세요:
+
+    1. {questions[genre][0]}: {answers[0]}
+    2. {questions[genre][1]}: {answers[1]}
+    3. {questions[genre][2]}: {answers[2]}
+    4. {questions[genre][3]}: {answers[3]}
+    5. {questions[genre][4]}: {answers[4]}
+
+    이 정보를 바탕으로 300-500자 정도의 {genre} 작품 개요나 일부를 작성해주세요. 
+    한국 현대 문학의 특징과 {genre} 갈래의 특성을 잘 반영하도록 해주세요.
     """
-    return story
+
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": f"당신은 한국 현대 문학의 {genre} 갈래에 정통한 작가입니다."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    return response.choices[0].message.content
 
 def main():
     st.title("한국 현대 문학 작품 생성 봇")
     
-    st.write("다음 질문들에 답해주세요. 그러면 당신만의 한국 현대 문학 작품을 생성해 드리겠습니다.")
+    st.write("원하는 문학 갈래를 선택하고 질문에 답해주세요. 그러면 당신만의 한국 현대 문학 작품을 생성해 드리겠습니다.")
+    
+    genre = st.selectbox("문학 갈래를 선택하세요", ["서정", "서사", "극", "교술"])
     
     answers = []
-    for question in questions:
+    for question in questions[genre]:
         answer = st.text_input(question)
         answers.append(answer)
     
     if st.button("작품 생성하기"):
         if all(answers):
-            story = generate_story(answers)
-            st.write("생성된 작품:")
-            st.write(story)
+            with st.spinner('작품을 생성 중입니다...'):
+                work = generate_work(genre, answers)
+            st.write(f"생성된 {genre} 작품:")
+            st.write(work)
         else:
             st.warning("모든 질문에 답해주세요.")
 
