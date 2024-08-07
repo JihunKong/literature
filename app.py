@@ -1,7 +1,7 @@
-import os
+import streamlit as st
 from openai import OpenAI
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+client = OpenAI(api_key=st.secrets["openai"]["api_key"])
 
 # 문학 갈래별 질문 리스트
 questions = {
