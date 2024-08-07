@@ -1,11 +1,7 @@
-import streamlit as st
-from openai import OpenAI
 import os
+from openai import OpenAI
 
-# OpenAI API 키 설정
-os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-
-client = OpenAI()
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # 문학 갈래별 질문 리스트
 questions = {
