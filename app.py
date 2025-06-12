@@ -78,6 +78,9 @@ if 'current_work' not in st.session_state:
 if 'analysis_cache' not in st.session_state:
     st.session_state.analysis_cache = {}
 
+if 'show_generated_work' not in st.session_state:
+    st.session_state.show_generated_work = False
+
 @st.cache_data
 def generate_work(genre: str, answers: List[str], style: str = "현대적", length: str = "중편") -> str:
     genre_prompts = {
@@ -295,6 +298,7 @@ def main():
         
         if selected_genre:
             st.session_state.selected_genre = selected_genre
+            st.session_state.show_generated_work = False  # 새 장르 선택시 이전 작품 숨기기
         
         if st.session_state.selected_genre:
             genre = st.session_state.selected_genre
@@ -343,24 +347,27 @@ def main():
                             }
                             st.session_state.works_history.append(work_data)
                             st.session_state.current_work = work_data
+                            st.session_state.show_generated_work = True
                         
                         st.success("✅ 작품이 완성되었습니다!")
                         st.balloons()
-                        
-                        with st.expander("📜 생성된 작품 보기", expanded=True):
-                            st.markdown(f"### {genre} 작품")
-                            st.write(work)
-                            
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                st.download_button(
-                                    label="📥 작품 다운로드",
-                                    data=work,
-                                    file_name=f"{genre}_작품_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                                    mime="text/plain"
-                                )
                     else:
                         st.warning("⚠️ 모든 질문에 답변해주세요.")
+            
+            # 폼 외부에서 생성된 작품 표시 및 다운로드 버튼
+            if hasattr(st.session_state, 'show_generated_work') and st.session_state.show_generated_work:
+                work_data = st.session_state.current_work
+                with st.expander("📜 생성된 작품 보기", expanded=True):
+                    st.markdown(f"### {work_data['genre']} 작품")
+                    st.write(work_data['content'])
+                    
+                    st.download_button(
+                        label="📥 작품 다운로드",
+                        data=work_data['content'],
+                        file_name=f"{work_data['genre']}_작품_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                        mime="text/plain",
+                        key="download_generated_work"
+                    )
     
     with tab2:
         if st.session_state.current_work:
