@@ -5,6 +5,7 @@ from datetime import datetime
 import random
 from typing import Dict, List
 import json
+import os
 
 st.set_page_config(
     page_title="한국 현대 문학 창작 스튜디오",
@@ -13,8 +14,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-if 'openai' in st.secrets:
-    client = OpenAI(api_key=st.secrets["openai"]["api_key"])
+# OpenAI API 키 환경변수 처리 방식 수정
+api_key = os.getenv('OPENAI_API_KEY')
+if api_key:
+    client = OpenAI(api_key=api_key)
 else:
     st.error("OpenAI API 키가 설정되지 않았습니다.")
     st.stop()
@@ -171,9 +174,9 @@ def get_writing_prompt(genre: str) -> str:
     }
     return random.choice(prompts.get(genre, ["자유 주제"]))
 
-def export_to_pdf(work_data: Dict) -> bytes:
-    
-    pdf_content = f"""
+# 함수명을 export_to_text로 변경
+def export_to_text(work_data: Dict) -> bytes:
+    text_content = f"""
 한국 현대 문학 창작 스튜디오
 ===========================
 
@@ -188,9 +191,9 @@ def export_to_pdf(work_data: Dict) -> bytes:
 창작 과정:
 """
     for i, (q, a) in enumerate(zip(questions[work_data['genre']]["questions"], work_data['answers'])):
-        pdf_content += f"\n{i+1}. {q}\n   답변: {a}\n"
+        text_content += f"\n{i+1}. {q}\n   답변: {a}\n"
     
-    return pdf_content.encode('utf-8')
+    return text_content.encode('utf-8')
 
 def display_sidebar():
     with st.sidebar:
@@ -397,12 +400,13 @@ def main():
                     st.write(analysis)
             
             with col2:
-                if st.button("📄 PDF로 내보내기", use_container_width=True):
+                # 버튼 텍스트와 기능 수정
+                if st.button("📄 텍스트로 내보내기", use_container_width=True):
                     selected_work = st.session_state.works_history[selected_work_idx]
-                    pdf_data = export_to_pdf(selected_work)
+                    text_data = export_to_text(selected_work)
                     st.download_button(
-                        label="📥 PDF 다운로드",
-                        data=pdf_data,
+                        label="📥 텍스트 다운로드",
+                        data=text_data,
                         file_name=f"{selected_work['genre']}_작품_분석_{selected_work['timestamp'].replace(':', '-')}.txt",
                         mime="text/plain"
                     )
