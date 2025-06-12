@@ -50,7 +50,7 @@ def generate_work(genre, answers):
     """
 
     response = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": f"당신은 한국 현대 문학의 {genre} 갈래에 정통한 작가입니다."},
             {"role": "user", "content": prompt}
